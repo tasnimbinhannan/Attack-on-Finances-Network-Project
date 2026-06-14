@@ -1,0 +1,120 @@
+# ==============================================================================
+# LISBON ROUTER CONFIGURATION
+# Attack on Finances (AoF) - Enterprise Network Project
+# ==============================================================================
+# 
+# Location: Lisbon, Portugal (Branch)
+# Role: Secure Branch Router - Access-Controlled
+# Devices Served: 200 hosts
+# Addressing: DHCP-enabled
+# WAN Connection: 1 (to California)
+# Special Service: Secure Server (Server8 at 172.16.62.50)
+#
+# SECURITY FEATURE: Access Control List (ACL) blocks Vulnerable PC in Paris
+# from accessing the Secure Server at this location
+#
+# ==============================================================================
+
+enable
+configure terminal
+
+# ==============================================================================
+# INTERFACE CONFIGURATION
+# ==============================================================================
+
+# LAN Interface - Lisbon Branch Network
+# Serves 200 users in the Lisbon office
+# DHCP assigns IPs from this range
+interface FastEthernet0/0
+ description Branch-LAN-Lisbon
+ ip address 172.16.62.1 255.255.255.0
+ no shutdown
+exit
+
+# WAN Interface to California
+# Connects to California router (172.16.63.33)
+# Distance: 200 km
+# Uses /30 point-to-point subnet
+interface Serial2/0
+ description WAN-to-California
+ ip address 172.16.63.34 255.255.255.252
+ no shutdown
+exit
+
+# ==============================================================================
+# DHCP CONFIGURATION
+# ==============================================================================
+#
+# DHCP Pool: Lisbon
+# Range: 172.16.62.1 - 172.16.62.254 (within 172.16.62.0/24)
+#
+# Devices receiving DHCP:
+# - PC19
+# - PC20
+#
+# DNS Server: 172.16.62.50 (local DNS server in Lisbon)
+#
+
+ip dhcp pool Lisbon
+ network 172.16.62.0 255.255.255.0
+ default-router 172.16.62.1
+ dns-server 172.16.62.50
+exit
+
+# ==============================================================================
+# ACCESS CONTROL LIST (ACL) - SECURITY MEASURE
+# ==============================================================================
+#
+# PURPOSE: Prevent the Vulnerable PC in Paris from accessing Lisbon Secure Server
+#
+# The Vulnerable PC (user2@paris.com) at IP 172.16.32.2 is explicitly blocked
+# from sending ANY traffic to the Lisbon Secure Server (172.16.62.2)
+#
+# This ACL:
+# 1. DENIES traffic from 172.16.32.2 to 172.16.62.2
+# 2. PERMITS all other traffic
+# 3. Is applied INBOUND on the LAN interface (fa0/0)
+#
+
+access-list 101 deny ip 172.16.32.2 0.0.0.0 172.16.62.2 0.0.0.0
+access-list 101 permit ip any any
+
+# Apply ACL 101 to inbound traffic on LAN interface
+interface FastEthernet0/0
+ ip access-group 101 in
+exit
+
+# ==============================================================================
+# ROUTING CONFIGURATION
+# ==============================================================================
+#
+# DYNAMIC ROUTING (RIP v2):
+# Lisbon is part of the backbone dynamic routing network
+#
+# RIP learns and advertises:
+# - 172.16.62.0/24 (Lisbon LAN)
+# - All other networks learned from California router
+#
+
+router rip
+ version 2
+ 
+ # Directly connected networks
+ network 172.16.62.0       # Lisbon LAN
+ network 172.16.63.32      # WAN to California (se2/0)
+ 
+ # Disable automatic summarization for VLSM support
+ no auto-summary
+exit
+
+# ==============================================================================
+# END OF CONFIGURATION
+# ==============================================================================
+#
+# Secure Server at 172.16.62.50:
+# - Hostname: Server8
+# - Purpose: Secure data repository
+# - Access Restriction: Blocked from Vulnerable PC in Paris (172.16.32.2)
+# - All other hosts can access it normally
+#
+exit

@@ -1,0 +1,126 @@
+# ==============================================================================
+# CALIFORNIA ROUTER CONFIGURATION
+# Attack on Finances (AoF) - Enterprise Network Project
+# ==============================================================================
+# 
+# Location: California, USA (Branch)
+# Role: Secondary Hub Router
+# Devices Served: 300 hosts
+# Addressing: DHCP-enabled
+# WAN Connections: 3 (to Dhaka, Lisbon, Tokyo)
+# Special Services: DNS Server (172.16.60.50), Web Server (www.california..gov)
+#
+# NETWORK HUB NOTE: California connects three different regions (Dhaka, Lisbon, Tokyo)
+# and serves as a secondary backbone for dynamic routing
+#
+# ==============================================================================
+
+enable
+configure terminal
+
+# ==============================================================================
+# INTERFACE CONFIGURATION
+# ==============================================================================
+
+# LAN Interface - California Branch Network
+# Serves 300 users in the California office
+# DHCP assigns IPs from this range
+interface FastEthernet0/0
+ description Branch-LAN-California
+ ip address 172.16.60.1 255.255.254.0
+ no shutdown
+exit
+
+# WAN Interface to Dhaka (Primary Link)
+# Connects to Dhaka router (172.16.63.17)
+# Distance: 11 km
+# Uses /30 point-to-point subnet
+interface Serial2/0
+ description WAN-to-Dhaka-Primary
+ ip address 172.16.63.18 255.255.255.252
+ no shutdown
+exit
+
+# WAN Interface to Lisbon
+# Connects to Lisbon router (172.16.63.34)
+# Distance: 200 km
+# Uses /30 point-to-point subnet
+interface Serial3/0
+ description WAN-to-Lisbon
+ ip address 172.16.63.33 255.255.255.252
+ no shutdown
+exit
+
+# WAN Interface to Tokyo
+# Connects to Tokyo router (172.16.63.26)
+# Distance: 152 km
+# Uses /30 point-to-point subnet
+interface Serial9/0
+ description WAN-to-Tokyo
+ ip address 172.16.63.25 255.255.255.252
+ no shutdown
+exit
+
+# ==============================================================================
+# DHCP CONFIGURATION
+# ==============================================================================
+#
+# DHCP Pool: California
+# Range: 172.16.60.1 - 172.16.61.254 (within 172.16.60.0/23)
+#
+# Devices receiving DHCP:
+# - PC4
+# - PC5
+#
+# DNS Server: 172.16.60.50 (also serves Tokyo and other branches)
+#
+
+ip dhcp pool California
+ network 172.16.60.0 255.255.254.0
+ default-router 172.16.60.1
+ dns-server 172.16.60.50
+exit
+
+# ==============================================================================
+# ROUTING CONFIGURATION
+# ==============================================================================
+#
+# DYNAMIC ROUTING (RIP v2):
+# California is part of the primary dynamic routing backbone
+#
+# RIP learns and advertises:
+# - 172.16.60.0/23 (California LAN)
+# - 172.16.62.0/24 (Lisbon - learned from Lisbon router)
+# - 172.16.48.0/21 (Tokyo - learned from Tokyo router)
+# - 172.16.0.0/19 (Dhaka - learned from Dhaka router)
+# - 172.16.32.0/20 (Paris - learned from Dhaka router)
+# - 172.16.56.0/22 (Bucharest - learned from Dhaka router)
+#
+
+router rip
+ version 2
+ 
+ # Directly connected networks
+ network 172.16.60.0       # California LAN
+ network 172.16.63.16      # WAN to Dhaka (se2/0)
+ network 172.16.63.32      # WAN to Lisbon (se3/0)
+ network 172.16.63.24      # WAN to Tokyo (se9/0)
+ 
+ # Disable automatic summarization for VLSM support
+ no auto-summary
+exit
+
+# ==============================================================================
+# END OF CONFIGURATION
+# ==============================================================================
+#
+# Web Server at 172.16.60.x (California subnet):
+# - URL: www.california..gov
+# - Response: "Welcome to Hotel California!"
+#
+# DNS Server at 172.16.60.50:
+# - Resolves www.california..gov → California Web Server
+# - Resolves www.japan.com → Tokyo Web Server
+# - Serves as primary DNS for DHCP clients in multiple branches
+#
+exit

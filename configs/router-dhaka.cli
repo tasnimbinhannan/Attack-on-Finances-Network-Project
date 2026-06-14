@@ -1,0 +1,102 @@
+# ==============================================================================
+# DHAKA ROUTER CONFIGURATION
+# Attack on Finances (AoF) - Enterprise Network Project
+# ==============================================================================
+# 
+# Location: Dhaka, Bangladesh (Headquarters)
+# Role: Central Hub Router
+# Devices Served: 4432 hosts (including 3 vendor VLANs)
+# WAN Connections: 3 (to California, Bucharest, Paris)
+#
+# ==============================================================================
+
+enable
+configure terminal
+
+# ==============================================================================
+# INTERFACE CONFIGURATION
+# ==============================================================================
+
+# LAN Interface - Headquarters Network
+# This is the main interface connecting to the internal switch and end devices
+interface FastEthernet0/0
+ description HQ-LAN-Dhaka
+ ip address 172.16.0.1 255.255.224.0
+ no shutdown
+exit
+
+# WAN Interface to Bucharest
+# Connects to Router-PT Bucharest (172.16.63.2)
+# Distance: 72 km
+interface Serial6/0
+ description WAN-to-Bucharest
+ ip address 172.16.63.1 255.255.255.252
+ no shutdown
+exit
+
+# WAN Interface to Paris
+# Connects to Router-PT Paris (172.16.63.10)
+# Distance: 56 km
+# Note: Uses /30 network for point-to-point link
+interface Serial3/0
+ description WAN-to-Paris
+ ip address 172.16.63.9 255.255.255.252
+ no shutdown
+exit
+
+# WAN Interface to California (Primary)
+# Connects to Router-PT California (172.16.63.18)
+# Distance: 11 km
+# Note: Primary backbone link
+interface Serial2/0
+ description WAN-to-California-Primary
+ ip address 172.16.63.17 255.255.255.252
+ no shutdown
+exit
+
+# ==============================================================================
+# ROUTING CONFIGURATION
+# ==============================================================================
+#
+# HYBRID ROUTING STRATEGY:
+# - Dynamic Routing (RIP v2): Used for Dhaka ↔ California ↔ Lisbon ↔ Tokyo
+# - Static Routing: Used for Dhaka ↔ Paris and Dhaka ↔ Bucharest
+#
+# This configuration uses RIP for the dynamic portion
+# Static routes are configured separately (see static route section below)
+#
+
+router rip
+ version 2
+ 
+ # Networks directly connected to Dhaka router
+ network 172.16.0.0        # Headquarters LAN
+ network 172.16.63.0       # WAN network block
+ network 172.16.63.8       # WAN to Paris (se3/0)
+ network 172.16.63.16      # WAN to California (se2/0)
+ 
+ # Disable automatic summarization for VLSM support
+ no auto-summary
+exit
+
+# ==============================================================================
+# STATIC ROUTING
+# ==============================================================================
+#
+# These static routes connect Dhaka to Paris and Bucharest
+# They override any dynamic routes learned from RIP
+#
+
+# Route to Paris network (172.16.32.0/20) via Paris router interface
+ip route 172.16.32.0 255.255.240.0 172.16.63.10
+
+# Route to Bucharest network (172.16.56.0/22) via Bucharest router interface
+ip route 172.16.56.0 255.255.252.0 172.16.63.2
+
+# ==============================================================================
+# END OF CONFIGURATION
+# ==============================================================================
+#
+# Save configuration (in Packet Tracer, this is automatic on network changes)
+#
+exit

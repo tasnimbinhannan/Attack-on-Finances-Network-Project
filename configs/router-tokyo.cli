@@ -1,0 +1,100 @@
+# ==============================================================================
+# TOKYO ROUTER CONFIGURATION
+# Attack on Finances (AoF) - Enterprise Network Project
+# ==============================================================================
+# 
+# Location: Tokyo, Japan (Branch)
+# Role: Far East Regional Hub
+# Devices Served: 10XY* hosts (where XY = last 2 digits of group member ID)
+# Addressing: DHCP-enabled
+# WAN Connection: 1 (to California)
+# Special Services: Web Server (www.japan.com), DNS Server (172.16.48.50)
+#
+# * XY values determined by group member student IDs
+#
+# ==============================================================================
+
+enable
+configure terminal
+
+# ==============================================================================
+# INTERFACE CONFIGURATION
+# ==============================================================================
+
+# LAN Interface - Tokyo Branch Network
+# Serves 10XY hosts in the Tokyo office
+# DHCP assigns IPs from this range
+interface FastEthernet0/0
+ description Branch-LAN-Tokyo
+ ip address 172.16.48.1 255.255.248.0
+ no shutdown
+exit
+
+# WAN Interface to California
+# Connects to California router (172.16.63.25)
+# Distance: 152 km
+# Uses /30 point-to-point subnet
+interface Serial2/0
+ description WAN-to-California
+ ip address 172.16.63.26 255.255.255.252
+ no shutdown
+exit
+
+# ==============================================================================
+# DHCP CONFIGURATION
+# ==============================================================================
+#
+# DHCP Pool: Tokyo
+# Range: 172.16.48.1 - 172.16.55.254 (within 172.16.48.0/21)
+#
+# Devices receiving DHCP:
+# - PC8
+# - PC21
+#
+# DNS Server: 172.16.48.50 (local DNS server in Tokyo)
+#
+
+ip dhcp pool Tokyo
+ network 172.16.48.0 255.255.248.0
+ default-router 172.16.48.1
+ dns-server 172.16.48.50
+exit
+
+# ==============================================================================
+# ROUTING CONFIGURATION
+# ==============================================================================
+#
+# DYNAMIC ROUTING (RIP v2):
+# Tokyo is part of the backbone dynamic routing network
+#
+# RIP learns and advertises:
+# - 172.16.48.0/21 (Tokyo LAN)
+# - All other networks learned from California router
+#
+
+router rip
+ version 2
+ 
+ # Directly connected networks
+ network 172.16.48.0       # Tokyo LAN
+ network 172.16.63.24      # WAN to California (se2/0)
+ 
+ # Disable automatic summarization for VLSM support
+ no auto-summary
+exit
+
+# ==============================================================================
+# END OF CONFIGURATION
+# ==============================================================================
+#
+# Web Server (www.japan.com):
+# - Server: Server1
+# - Response: "I love Anime!"
+# - IP: 172.16.48.x (in Tokyo subnet)
+#
+# DNS Server (172.16.48.50):
+# - Resolves local queries
+# - Coordinates with California DNS for global lookups
+# - Points DHCP clients to this server for name resolution
+#
+exit

@@ -1,0 +1,93 @@
+# ==============================================================================
+# PARIS ROUTER CONFIGURATION
+# Attack on Finances (AoF) - Enterprise Network Project
+# ==============================================================================
+# 
+# Location: Paris, France (Branch)
+# Role: Branch Router - Largest User Base
+# Devices Served: 2450 hosts
+# Addressing: DHCP-enabled
+# WAN Connection: 1 (to Dhaka via static route)
+# Mail Server: Yes (Server0 at 172.16.32.50)
+#
+# ==============================================================================
+
+enable
+configure terminal
+
+# ==============================================================================
+# INTERFACE CONFIGURATION
+# ==============================================================================
+
+# LAN Interface - Paris Branch Network
+# Serves 2450 users (largest branch)
+# DHCP assigns IPs from this range
+interface FastEthernet0/0
+ description Branch-LAN-Paris
+ ip address 172.16.32.1 255.255.240.0
+ no shutdown
+exit
+
+# WAN Interface to Dhaka
+# Connects to Dhaka router (172.16.63.9)
+# Distance: 56 km
+# Uses /30 point-to-point subnet
+interface Serial2/0
+ description WAN-to-Dhaka-HQ
+ ip address 172.16.63.10 255.255.255.252
+ no shutdown
+exit
+
+# ==============================================================================
+# DHCP CONFIGURATION
+# ==============================================================================
+#
+# DHCP Pool: Paris
+# Range: 172.16.32.1 - 172.16.47.254 (within 172.16.32.0/20)
+# 
+# Devices receiving DHCP:
+# - Laptop0 (user1@paris.com)
+# - Vulnerable PC (user2@paris.com)
+# - Printer0
+#
+
+ip dhcp pool Paris
+ network 172.16.32.0 255.255.240.0
+ default-router 172.16.32.1
+ dns-server 172.16.32.50
+exit
+
+# ==============================================================================
+# ROUTING CONFIGURATION
+# ==============================================================================
+#
+# HYBRID APPROACH:
+# - Paris connects to Dhaka via STATIC ROUTE (from Dhaka router)
+# - Paris learns about other networks via RIP from Dhaka
+#
+# RIP Configuration:
+# - Advertises its own network (172.16.32.0/20)
+# - Receives routes from Dhaka for all other branches
+#
+
+router rip
+ version 2
+ 
+ # Directly connected networks
+ network 172.16.32.0       # Paris LAN
+ network 172.16.63.8       # WAN network block (to Dhaka)
+ 
+ # Disable automatic summarization for VLSM support
+ no auto-summary
+exit
+
+# ==============================================================================
+# END OF CONFIGURATION
+# ==============================================================================
+#
+# Mail Server at 172.16.32.50:
+# - Domain: paris.com
+# - Users: user1@paris.com, user2@paris.com
+# - Handles email exchange with Bucharest mail server
+#
+exit

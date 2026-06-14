@@ -1,0 +1,73 @@
+# ==============================================================================
+# BUCHAREST ROUTER CONFIGURATION
+# Attack on Finances (AoF) - Enterprise Network Project
+# ==============================================================================
+# 
+# Location: Bucharest, Romania (Branch)
+# Role: Branch Router - Threat Origin Site
+# Devices Served: 756 hosts (static addressing - security requirement)
+# WAN Connection: 1 (to Dhaka via static route)
+#
+# SECURITY NOTE: This is the location where the original breach occurred.
+# All devices use static IP addressing to prevent rogue DHCP attacks.
+#
+# ==============================================================================
+
+enable
+configure terminal
+
+# ==============================================================================
+# INTERFACE CONFIGURATION
+# ==============================================================================
+
+# LAN Interface - Bucharest Branch Network
+# Serves 756 devices across the branch office
+interface FastEthernet0/0
+ description Branch-LAN-Bucharest
+ ip address 172.16.56.1 255.255.252.0
+ no shutdown
+exit
+
+# WAN Interface to Dhaka
+# Connects to Dhaka router (172.16.63.1)
+# Distance: 72 km
+# Uses /30 point-to-point subnet
+interface Serial2/0
+ description WAN-to-Dhaka-HQ
+ ip address 172.16.63.2 255.255.255.252
+ no shutdown
+exit
+
+# ==============================================================================
+# ROUTING CONFIGURATION
+# ==============================================================================
+#
+# Bucharest is part of the DYNAMIC ROUTING (RIP) segment
+# but only learns about networks that Dhaka advertises
+# 
+# Routes learned via RIP:
+# - 172.16.0.0/19 (Dhaka)
+# - 172.16.60.0/23 (California)
+# - 172.16.62.0/24 (Lisbon)
+# - 172.16.48.0/21 (Tokyo)
+#
+
+router rip
+ version 2
+ 
+ # Directly connected networks
+ network 172.16.56.0       # Bucharest LAN
+ network 172.16.63.0       # WAN network block
+ 
+ # Disable automatic summarization for VLSM support
+ no auto-summary
+exit
+
+# ==============================================================================
+# END OF CONFIGURATION
+# ==============================================================================
+#
+# Note: No DHCP pool configured - all devices use STATIC addressing
+# This is a security requirement for the breach-origin site
+#
+exit

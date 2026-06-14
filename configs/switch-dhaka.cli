@@ -1,0 +1,128 @@
+# ==============================================================================
+# DHAKA SWITCH CONFIGURATION
+# Attack on Finances (AoF) - Enterprise Network Project
+# ==============================================================================
+# 
+# Location: Dhaka, Bangladesh (Headquarters)
+# Role: Layer 2 Switch with VLAN Isolation
+# Function: Isolate 3 vendor groups into separate VLANs
+#
+# SECURITY PURPOSE: Prevent cross-vendor communication at HQ
+# Each vendor group (Duber, Uthao, Kharaz) operates on its own isolated VLAN
+#
+# ==============================================================================
+
+enable
+configure terminal
+
+# ==============================================================================
+# VLAN CONFIGURATION
+# ==============================================================================
+#
+# Three VLANs are created to isolate vendor groups from each other
+# Each VLAN can communicate internally but NOT across VLANs
+#
+
+# VLAN 2 - Duber Vendor Group
+vlan 2
+ name Duber
+exit
+
+# VLAN 3 - Uthao Vendor Group
+vlan 3
+ name Uthao
+exit
+
+# VLAN 4 - Kharaz Vendor Group
+vlan 4
+ name Kharaz
+exit
+
+# ==============================================================================
+# PORT ASSIGNMENT TO VLANs
+# ==============================================================================
+#
+# Each port is assigned to a specific VLAN based on the device connected to it
+#
+
+# DUBER VLAN (VLAN 2) - Ports fa1/1 and fa2/1
+# Devices: PC15 (172.16.0.2), PC16 (172.16.0.3)
+
+interface FastEthernet1/1
+ description Duber-PC15
+ switchport mode access
+ switchport access vlan 2
+exit
+
+interface FastEthernet2/1
+ description Duber-PC16
+ switchport mode access
+ switchport access vlan 2
+exit
+
+# UTHAO VLAN (VLAN 3) - Ports fa3/1 and fa6/1
+# Devices: PC2 (172.16.0.4), PC17 (172.16.0.5)
+
+interface FastEthernet3/1
+ description Uthao-PC2
+ switchport mode access
+ switchport access vlan 3
+exit
+
+interface FastEthernet6/1
+ description Uthao-PC17
+ switchport mode access
+ switchport access vlan 3
+exit
+
+# KHARAZ VLAN (VLAN 4) - Ports fa7/1 and fa8/1
+# Devices: PC18 (172.16.0.6), PC7 (172.16.0.7)
+
+interface FastEthernet7/1
+ description Kharaz-PC18
+ switchport mode access
+ switchport access vlan 4
+exit
+
+interface FastEthernet8/1
+ description Kharaz-PC7
+ switchport mode access
+ switchport access vlan 4
+exit
+
+# ==============================================================================
+# INTER-VLAN ISOLATION
+# ==============================================================================
+#
+# NO inter-VLAN routing is configured
+# This means:
+# - Duber (VLAN 2) ←→ Uthao (VLAN 3) = BLOCKED
+# - Duber (VLAN 2) ←→ Kharaz (VLAN 4) = BLOCKED
+# - Uthao (VLAN 3) ←→ Kharaz (VLAN 4) = BLOCKED
+#
+# Each VLAN is completely isolated at Layer 2
+# This is the PRIMARY SECURITY FEATURE for Dhaka HQ
+#
+
+# ==============================================================================
+# INTRA-VLAN COMMUNICATION
+# ==============================================================================
+#
+# All devices within the same VLAN can communicate freely:
+# - Duber ↔ Duber = ALLOWED (VLAN 2 to VLAN 2)
+# - Uthao ↔ Uthao = ALLOWED (VLAN 3 to VLAN 3)
+# - Kharaz ↔ Kharaz = ALLOWED (VLAN 4 to VLAN 4)
+#
+
+# ==============================================================================
+# END OF CONFIGURATION
+# ==============================================================================
+#
+# Summary:
+# - 3 VLANs created (Duber, Uthao, Kharaz)
+# - 6 ports assigned (2 per VLAN)
+# - All devices use static IP addressing (security requirement)
+# - No VLAN trunking or routing configured
+# - Complete isolation between vendor groups
+#
+exit
