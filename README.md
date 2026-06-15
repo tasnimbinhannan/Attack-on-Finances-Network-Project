@@ -390,12 +390,6 @@ All of the following were verified to be working in the simulation:
 
 ---
 
-## 👥 Team
-
-This project was developed as a group assignment for a Computer Networks course. Group member student IDs determined the variable parameters AB and XY used in device count calculations (Dhaka: 44AB devices, Tokyo: 10XY devices).
-
----
-
 ## 📜 License
 
 This project is submitted for academic purposes. The topology, configurations, and documentation were designed and implemented by the project group members.
